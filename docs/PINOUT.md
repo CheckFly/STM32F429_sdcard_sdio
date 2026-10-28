@@ -1,0 +1,76 @@
+# Pinout
+
+Source: `F429_sdcard_sdio_ecran.ioc` and `Core/Src/stm32f4xx_hal_msp.c`.
+
+## LTDC — RGB565 display
+
+| Pin | Signal | Direction | Notes |
+|-----|--------|-----------|-------|
+| PF10 | LTDC_DE | AF14 | Data enable |
+| PA3 | LTDC_B5 | AF14 | Blue |
+| PA4 | LTDC_VSYNC | AF14 | Vertical sync |
+| PA6 | LTDC_G2 | AF14 | Green |
+| PB0 | LTDC_R3 | AF9 | Red |
+| PB1 | LTDC_R6 | AF9 | Red |
+| PE11 | LTDC_G3 | AF14 | Green |
+| PE12 | LTDC_B4 | AF14 | Blue |
+| PE14 | LTDC_CLK | AF14 | Pixel clock |
+| PE15 | LTDC_R7 | AF14 | Red |
+| PB10 | LTDC_G4 | AF14 | Green |
+| PB11 | LTDC_G5 | AF14 | Green |
+| PD10 | LTDC_B3 | AF14 | Blue |
+| PC6 | LTDC_HSYNC | AF14 | Horizontal sync |
+| PC7 | LTDC_G6 | AF14 | Green |
+| PA11 | LTDC_R4 | AF14 | Red |
+| PA12 | LTDC_R5 | AF14 | Red |
+| PD3 | LTDC_G7 | AF14 | Green |
+| PB8 | LTDC_B6 | AF14 | Blue |
+| PB9 | LTDC_B7 | AF14 | Blue |
+
+> The `.ioc` uses `RGB565` mode, but some RGB565 pins (for example R3/R6) use `GPIO_AF9_LTDC` instead of `AF14` because of the STM32F429 alternate-function mapping. Keep the generated values; do not “fix” them without checking the datasheet.
+
+## SDIO — SD card
+
+| Pin | Signal | Direction | Notes |
+|-----|--------|-----------|-------|
+| PC8 | SDIO_D0 | AF12 | Data 0 |
+| PC9 | SDIO_D1 | AF12 | Data 1 |
+| PC10 | SDIO_D2 | AF12 | Data 2 |
+| PC11 | SDIO_D3 | AF12 | Data 3 |
+| PC12 | SDIO_CK | AF12 | Clock |
+| PD2 | SDIO_CMD | AF12 | Command |
+
+## Card detect and serial
+
+| Pin | Signal | Current mode | Required mode | Notes |
+|-----|--------|--------------|---------------|-------|
+| PA10 | `SD_CARD_DET` | GPIO output | GPIO input, pull-up | Active-low switch assumed; conflicts with `USART1_RX` |
+| PA9 | `USART1_TX` (proposed) | not configured | AF7 push-pull | TX-only log to COM39 if the ST-Link VCP is USART1 |
+| PA0 | `UART4_TX` (alternative) | free | AF8 | Alternative if COM39 is wired to UART4 |
+| PA1 | `UART4_RX` (alternative) | free | AF8 | Alternative if COM39 is wired to UART4 |
+
+## UART conflicts
+
+The LTDC and SDIO assignments consume most UART pins:
+
+| UART | TX pin | RX pin | Conflict |
+|------|--------|--------|----------|
+| USART1 | PA9 | PA10 | RX used by `SD_CARD_DET` |
+| USART2 | PA2 | PA3 | PA3 used by LTDC_B5 |
+| USART3 | PB10 | PB11 | Both used by LTDC_G4/G5 |
+| UART4 | PA0 | PA1 | Free on this pinout |
+| UART5 | PC12 | PD2 | Both used by SDIO |
+| USART6 | PC6 | PC7 | Both used by LTDC_HSYNC/G6 |
+
+> **Decision required:** confirm whether COM39 is the ST-Link VCP (USART1) or an external USB-UART adapter. If USART1 is used for TX only, PA9 is sufficient and PA10 can remain the card-detect input. If bidirectional serial is required, use UART4 on PA0/PA1 and rewire COM39.
+
+## Clock
+
+| Item | Current value |
+|------|---------------|
+| SYSCLK source | HSI (16 MHz) |
+| PLL | ON, but SYSCLK still HSI |
+| AHB / APB1 / APB2 | 16 MHz / 16 MHz / 16 MHz |
+| Flash latency | 0 WS |
+
+> The current clock is intentionally conservative. For LVGL and SD throughput, switch to HSE/PLL and validate the board's HSE source (25 MHz on the `.ioc`, 8 MHz on the discovery board examples).

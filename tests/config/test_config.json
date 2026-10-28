@@ -1,0 +1,9 @@
+{
+  "port": "COM39",
+  "baudrate": 115200,
+  "duration_seconds": 20,
+  "expected_patterns": [
+    "SD:PRESENT",
+    "SD:REMOVED"
+  ]
+}

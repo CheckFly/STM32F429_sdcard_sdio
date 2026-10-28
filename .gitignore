@@ -1,0 +1,44 @@
+# Build outputs
+build/
+Debug/
+Release/
+*.o
+*.d
+*.su
+*.cyclo
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+*.srec
+
+# IDE / CubeIDE
+.settings/
+.metadata/
+*.launch
+.cproject.user
+.project.user
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Logs / temporary
+*.log
+logs/
+tmp/
+temp/
+docs/doxygen/
+
+# Secrets
+.env
+*.secret
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store

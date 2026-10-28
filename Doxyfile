@@ -1,0 +1,19 @@
+# Doxygen configuration for F429_sdcard_sdio_ecran
+PROJECT_NAME           = "F429_sdcard_sdio_ecran"
+PROJECT_NUMBER         = "0.02"
+PROJECT_BRIEF          = "STM32F429 SD card + LVGL display"
+OUTPUT_DIRECTORY       = docs/doxygen
+INPUT                  = Core/Src Core/Inc App/Src App/Inc Middlewares/Third_Party/FatFs/src
+RECURSIVE              = YES
+FILE_PATTERNS          = *.c *.h
+EXTRACT_ALL            = YES
+EXTRACT_STATIC         = YES
+GENERATE_HTML          = YES
+GENERATE_LATEX         = NO
+HTML_OUTPUT            = html
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+REFERENCED_BY_RELATION = YES
+REFERENCES_RELATION    = YES
+QUIET                  = NO
+WARN_IF_UNDOCUMENTED   = NO

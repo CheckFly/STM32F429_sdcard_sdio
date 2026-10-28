@@ -1,0 +1,39 @@
+name: STM32 firmware build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build firmware
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install ARM toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi binutils-arm-none-eabi make
+
+      - name: Build
+        run: make -j"$(nproc)"
+
+      - name: Show firmware size
+        run: arm-none-eabi-size build/F429_sdcard_sdio_ecran.elf
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: F429_sdcard_sdio_ecran-firmware
+          path: |
+            build/F429_sdcard_sdio_ecran.elf
+            build/F429_sdcard_sdio_ecran.bin
+            build/F429_sdcard_sdio_ecran.hex
+            build/F429_sdcard_sdio_ecran.map
+          if-no-files-found: error

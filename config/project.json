@@ -1,0 +1,45 @@
+{
+  "name": "F429_sdcard_sdio_ecran",
+  "version": "0.02",
+  "author": "tmangear",
+  "created": "2026-10-28",
+  "board": "32F429IDISCOVERY",
+  "mcu": "STM32F429ZITx",
+  "package": "LQFP144",
+  "flash_size_kb": 2048,
+  "ram_size_kb": 192,
+  "ccmram_size_kb": 64,
+  "external_ram": "8 MB SDRAM (board dependent)",
+  "com_port": "COM39",
+  "com_baudrate": 115200,
+  "com_format": "8N1",
+  "display": {
+    "library": "LVGL",
+    "interface": "LTDC",
+    "pixel_format": "RGB565",
+    "resolution": "to confirm with the physical panel"
+  },
+  "storage": {
+    "interface": "SDIO 4-bit",
+    "filesystem": "FatFs",
+    "partitions": [
+      {
+        "index": 1,
+        "size": "4 GB",
+        "filesystem": "FAT32",
+        "label": "SDCARD"
+      },
+      {
+        "index": 2,
+        "size": "remaining space",
+        "filesystem": "FAT32 or exFAT depending on card size",
+        "label": "DATA"
+      }
+    ]
+  },
+  "build": {
+    "ide": "STM32CubeIDE 1.11.2",
+    "toolchain": "GNU Tools for STM32 14.3.rel1",
+    "portable_build": "make"
+  }
+}
