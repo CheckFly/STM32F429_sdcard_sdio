@@ -15,8 +15,10 @@
 
 - `MX_SDIO_SD_Init` sets `SDIO_BUS_WIDE_4B` and `HAL_SD_ConfigWideBusOperation`.
 - The SD clock divider is `0` in the `.ioc`; verify the resulting clock is within the card's capability.
-- No FatFs middleware is present yet.
-- `PA10` is currently configured as `GPIO_Output`; this is incorrect for a card-detect switch.
+- FatFs sources have been copied into `Middlewares/Third_Party/FatFs`, but the diskio layer is not integrated yet.
+- `PA10` is now configured as `GPIO_Input` with pull-up.
+- **Test result:** `PA10` reads high with the card inserted and with the card removed. The card-detect switch is not reaching the MCU, or the module has no switch, or the active level/wiring is different.
+- SDIO initialization is currently disabled in `main.c` to keep the presence monitor alive.
 
 ## Partitions
 

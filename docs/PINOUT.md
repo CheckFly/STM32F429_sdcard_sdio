@@ -44,8 +44,8 @@ Source: `F429_sdcard_sdio_ecran.ioc` and `Core/Src/stm32f4xx_hal_msp.c`.
 
 | Pin | Signal | Current mode | Required mode | Notes |
 |-----|--------|--------------|---------------|-------|
-| PA10 | `SD_CARD_DET` | GPIO output | GPIO input, pull-up | Active-low switch assumed; conflicts with `USART1_RX` |
-| PA9 | `USART1_TX` (proposed) | not configured | AF7 push-pull | TX-only log to COM39 if the ST-Link VCP is USART1 |
+| PA10 | `SD_CARD_DET` | GPIO input, pull-up | GPIO input, pull-up | Reads high with card inserted and removed; wiring to confirm; conflicts with `USART1_RX` |
+| PA9 | `USART1_TX` | AF7 push-pull | AF7 push-pull | TX-only log to COM39; confirmed working |
 | PA0 | `UART4_TX` (alternative) | free | AF8 | Alternative if COM39 is wired to UART4 |
 | PA1 | `UART4_RX` (alternative) | free | AF8 | Alternative if COM39 is wired to UART4 |
 

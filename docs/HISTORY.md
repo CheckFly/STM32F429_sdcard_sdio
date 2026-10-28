@@ -48,6 +48,7 @@
   - `SD:REMOVED` is received at 115200 8N1.
   - USART1 registers show `USART1EN`, `TE`, and the correct baud rate.
 - Verified `PA10` card-detect input is read by the firmware.
+- Initialized the Git repository on `main`, committed the snapshot, and tagged `v0.02`.
 
 ### Findings
 

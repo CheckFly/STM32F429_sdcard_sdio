@@ -32,7 +32,13 @@ Use me for display rendering, file access, SD card mounting, partitioning, and i
 | COM port | `COM39`, 115200 8N1 |
 | Board | `32F429IDISCOVERY` |
 
-> **Important:** The current `.ioc` declares `PA10` as `GPIO_Output`. It must be changed to `GPIO_Input` with pull-up (active-low switch). If your card-detect signal is active-high, use pull-down instead. `PA10` is also `USART1_RX`; the serial log must therefore be TX-only on `PA9` or use another UART.
+> **Important:** `PA10` is now configured as `GPIO_Input` with pull-up, but the firmware reads it high with the card inserted **and** removed. The card-detect switch is not reaching `PA10` (or the module has no switch, or the active level is different). `PA10` is also `USART1_RX`; the serial log is TX-only on `PA9`.
+>
+> Before implementing FatFs mount-on-insert, verify the card-detect wiring with a multimeter:
+> - card inserted: `PA10` should be low (active-low switch to GND),
+> - card removed: `PA10` should be high (internal pull-up).
+>
+> If no card-detect switch is available, poll SDIO initialization instead and treat `HAL_SD_Init`/`HAL_SD_GetCardState` success as "card present".
 
 ## SD card presence state machine
 

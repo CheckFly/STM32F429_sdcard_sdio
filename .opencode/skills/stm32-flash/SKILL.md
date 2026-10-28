@@ -88,12 +88,15 @@ python .\tests\test_com39.py --port COM39 --baud 115200 --duration 20
 
 The test reads lines from COM39 and checks the expected patterns. Run it while inserting and removing the card.
 
-## Hardware notes
+## Confirmed hardware notes
 
-- The card-detect input is currently declared on `PA10` as `SD_CARD_DET`.
-- `PA10` must be configured as an input with pull-up (active-low card-detect switch).
-- `PA10` conflicts with `USART1_RX`. The serial log is therefore assumed to be **USART1 TX only on PA9** (or another UART after rewiring).
-- If COM39 is not the ST-Link VCP, confirm the actual UART and pins before changing the firmware.
+- COM39 is the **ST-Link Virtual COM Port** (`VID_0483`, `PID_374B`).
+- The VCP uses **USART1 TX on PA9** at 115200 8N1; this was verified with `SD:REMOVED` received on COM39.
+- USART1 is TX-only in this firmware. `PA10` is reserved for `SD_CARD_DET` and must not be configured as `USART1_RX`.
+- `PA10` is configured as `GPIO_Input` with pull-up, but it reads **high with the card inserted and with the card removed**.
+- The card-detect switch is therefore not reaching `PA10`, or the module has no switch, or the active level/wiring is different.
+- The ST community notes that some boards need solder bridges SB11/SB15 closed for the VCP to reach USART1. Check UM1670 chapter 6.3.3.
+- If the card-detect signal cannot be routed to `PA10`, use SDIO card polling or move the signal to a free GPIO and document it.
 
 ## Safety
 

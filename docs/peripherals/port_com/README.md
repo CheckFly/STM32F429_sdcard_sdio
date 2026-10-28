@@ -13,15 +13,24 @@
 
 ## UART mapping
 
-> **Decision required:** COM39 is assumed to be the ST-Link virtual COM port. The STM32F429I-DISCOVERY VCP is typically USART1 (PA9 TX / PA10 RX), but `PA10` is already used by `SD_CARD_DET`.
+COM39 is the ST-Link Virtual COM Port:
 
-Options:
+```text
+Name: STMicroelectronics STLink Virtual COM Port (COM39)
+USB VID/PID: 0483:374B
+```
 
-1. **USART1 TX only on PA9** — send logs, no receive. `PA10` stays the card-detect input.
-2. **UART4 on PA0/PA1** — move COM39 to UART4 and keep PA9/PA10 free.
-3. **External USB-UART adapter** — connect its RX to the chosen MCU TX pin.
+The VCP uses **USART1 TX on PA9**. This was verified: the firmware emits `SD:REMOVED` on COM39 at 115200 8N1.
 
-Do not configure `PA10` as `USART1_RX` while it is used for card detection.
+`PA10` is `USART1_RX` on the MCU, but it is reserved for `SD_CARD_DET`. The current firmware therefore uses **USART1 TX only**. Do not enable USART1 RX while `PA10` is used for card detection.
+
+Options if bidirectional serial is required:
+
+1. Move `SD_CARD_DET` to another free GPIO and enable USART1 RX.
+2. Use UART4 on PA0/PA1 and rewire the adapter.
+3. Use an external USB-UART adapter on the chosen TX/RX pins.
+
+The ST community notes that some boards require solder bridges SB11/SB15 to connect USART1 to the ST-Link VCP (UM1670 chapter 6.3.3).
 
 ## Firmware messages
 

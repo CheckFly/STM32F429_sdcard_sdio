@@ -9,10 +9,11 @@ Project: STM32F429ZI board with SD card (SDIO + FatFs) and an RGB LCD driven by 
 | Build with STM32CubeIDE GCC toolchain | ✅ verified |
 | Build with portable `Makefile` | ✅ verified |
 | Flash through ST-Link/SWD | ✅ verified (board: 32F429IDISCOVERY) |
-| LVGL display stack | ⏳ planned |
-| FatFs on SDIO | ⏳ planned |
+| LVGL display stack | ⏳ planned / scaffolded |
+| FatFs on SDIO | ⏳ sources copied, diskio pending |
 | Two partitions (4 GB + remaining space) | ⏳ planned |
-| SD presence on COM39 | ⏳ planned |
+| COM39 serial log (USART1 TX) | ✅ verified |
+| SD presence on COM39 | ⚠️ `SD:REMOVED` works; card insertion not detected (PA10 wiring) |
 | GitHub Actions build | ✅ added |
 
 ## Quick start
