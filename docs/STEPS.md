@@ -24,13 +24,21 @@
 
 ## Phase 2 — FatFs and two partitions
 
-- [ ] Copy FatFs from STM32Cube F4 V1.27.1.
+> **Status:** the display is parked; the SD card is validated over UART in **4-bit SDIO**
+> (PC8..PC11 = D0..D3, PC12 CK, PD2 CMD) at 7.5 MHz (`ClockDiv = 4`) with DMA.
+> Throughput: 2509 KB/s write / 2876 KB/s read, verify OK.
+
+- [x] Validate SDIO 1-bit initialization over UART.
+- [x] Record the card capacity/type from `SD:CARD` (7580 MB, 512-byte blocks).
+- [x] Validate 4-bit wide-bus operation and DMA throughput.
+- [x] Create the MBR with 4 GB + remaining-space partitions.
+- [x] Copy FatFs from STM32Cube F4 V1.27.1.
 - [ ] Add `ffconf.h` with two volumes.
 - [ ] Implement `sd_diskio.c` using the global `hsd`.
 - [ ] Parse the MBR and map `0:` and `1:` to the two partitions.
 - [ ] Mount both volumes and emit `SD:MOUNT_OK`, `SD:PART1_OK`, `SD:PART2_OK`.
 - [ ] Test a 4 GB FAT32 partition and the remaining-space partition.
-- [ ] Bump version to `0.03` and tag `v0.03`.
+- [ ] Bump version and tag once FatFs is mounted (`0.10`).
 
 ## Phase 3 — LVGL and LTDC
 
@@ -54,8 +62,6 @@
 
 | Blocker | Impact | Action |
 |---------|--------|--------|
-| COM39 UART unknown | Serial log cannot be transmitted | Confirm wiring / ST-Link VCP UART |
-| `PA10` output mode | Card detect may drive the signal instead of reading it | Reconfigure as input with pull-up |
-| LTDC zero-size layers | No visible output | Set panel timings and frame buffer |
-| No FatFs diskio | No file access | Add MBR-aware diskio |
-| No LVGL sources | No GUI | Add LVGL middleware |
+| No FatFs diskio | No file access | Add an MBR-aware diskio layer |
+| SDIO above 7.5 MHz | TX FIFO underrun on writes | Keep `ClockDiv = 4`; needs a faster feed path |
+| Display parked | No visible output | Restore LTDC/LVGL, then re-check PC10 (SDIO_D2) |

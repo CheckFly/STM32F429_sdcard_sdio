@@ -26,13 +26,22 @@ Use me for display rendering, file access, SD card mounting, partitioning, and i
 
 | Item | Value |
 |------|-------|
-| Screen | LVGL over LTDC, RGB565 |
-| SD interface | SDIO 4-bit: PC8..PC12, PD2 |
-| Card detect | `PA10`, label `SD_CARD_DET` |
+| Screen | parked (display removed from the active build) |
+| SD interface | SDIO **4-bit**: PC8..PC11 (D0..D3), PC12 (CK), PD2 (CMD) |
+| SD clock | `ClockDiv = 4` → 7.5 MHz with a 45 MHz SDIOCLK |
+| Card detect | `PA10`, label `SD_CARD_DET`, input pull-down |
+| LCD conflict | `PC10` is `LTDC_R2`; it must never be configured as `SDIO_D2` |
+| Active mode | UART-only diagnostics on COM39 |
 | COM port | `COM39`, 115200 8N1 |
 | Board | `32F429IDISCOVERY` |
 
-> **Important:** `PA10` is now configured as `GPIO_Input` with pull-up, but the firmware reads it high with the card inserted **and** removed. The card-detect switch is not reaching `PA10` (or the module has no switch, or the active level is different). `PA10` is also `USART1_RX`; the serial log is TX-only on `PA9`.
+> **PC10 note:** `PC10` is `LTDC_R2` on the on-board LCD. The display stack is parked, so PC10 is used as `SDIO_D2` in 4-bit mode. Re-validate before restoring LTDC.
+>
+> **4-bit bring-up:** initialize in 1-bit, enable `SDIO_HARDWARE_FLOW_CONTROL_ENABLE`, then call `HAL_SD_ConfigWideBusOperation(&hsd, SDIO_BUS_WIDE_4B)` and fall back to 1-bit on error. 7.5 MHz (`ClockDiv = 4`) is the highest reliable divider; 9 MHz and above underrun the TX FIFO.
+>
+> **HAL pitfall:** stock `SD_FindSCR()` (wide-bus switch) reads the data FIFO without bounding the index and waits on `SDMMC_DATATIMEOUT` = `0xFFFFFFFF` ms. Bound the read to 2 words and the wait to ~250 ms, otherwise the switch can hang.
+>
+> **Important:** `PA10` is configured as `GPIO_Input` with pull-up, but the firmware reads it high with the card inserted **and** removed. The card-detect switch is not reaching `PA10` (or the module has no switch, or the active level is different). `PA10` is also `USART1_RX`; the serial log is TX-only on `PA9`.
 >
 > Before implementing FatFs mount-on-insert, verify the card-detect wiring with a multimeter:
 > - card inserted: `PA10` should be low (active-low switch to GND),

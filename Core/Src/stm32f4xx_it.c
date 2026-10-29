@@ -22,6 +22,8 @@
 #include "stm32f4xx_it.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "sd_card.h"
+#include "log_uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,7 +59,8 @@
 /* External variables --------------------------------------------------------*/
 
 /* USER CODE BEGIN EV */
-
+extern DMA_HandleTypeDef hdma_sdio_tx;
+extern DMA_HandleTypeDef hdma_sdio_rx;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -84,7 +87,16 @@ void NMI_Handler(void)
 void HardFault_Handler(void)
 {
   /* USER CODE BEGIN HardFault_IRQn 0 */
+  {
+    uint32_t *frame = (uint32_t *)__get_MSP();
 
+    LOG_Printf(
+        "SD:FAULT cfsr=%08lX hfsr=%08lX pc=%08lX lr=%08lX\r\n",
+        (unsigned long)SCB->CFSR,
+        (unsigned long)SCB->HFSR,
+        (unsigned long)frame[24],
+        (unsigned long)frame[20]);
+  }
   /* USER CODE END HardFault_IRQn 0 */
   while (1)
   {
@@ -199,5 +211,18 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /* USER CODE BEGIN 1 */
+void DMA2_Stream3_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_sdio_rx);
+}
 
+void DMA2_Stream6_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_sdio_tx);
+}
+
+void SDIO_IRQHandler(void)
+{
+  HAL_SD_IRQHandler(&hsd);
+}
 /* USER CODE END 1 */

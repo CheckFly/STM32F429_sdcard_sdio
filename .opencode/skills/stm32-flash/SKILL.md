@@ -95,6 +95,10 @@ The test reads lines from COM39 and checks the expected patterns. Run it while i
 - USART1 is TX-only in this firmware. `PA10` is reserved for `SD_CARD_DET` and must not be configured as `USART1_RX`.
 - `PA10` is configured as `GPIO_Input` with pull-up, but it reads **high with the card inserted and with the card removed**.
 - The card-detect switch is therefore not reaching `PA10`, or the module has no switch, or the active level/wiring is different.
+- **PC10 is `LTDC_R2` on the on-board LCD.** Do not use SDIO 4-bit: its D2 line is PC10. The active firmware uses 1-bit SDIO (PC8 D0, PC12 CK, PD2 CMD).
+- The SD driver is validated in 1-bit mode with `ClockDiv = 8` (4.8 MHz). `SD:INIT_OK` and `SD:CARD` are received on COM39.
+- The display/LVGL code is parked in `App/display_parked/`; the active build is UART-only.
+- After a CubeMX regeneration, remove the generated `MX_SDIO_SD_Init()` call from `main.c`; the App manages SDIO in `App/Src/sd_card.c`.
 - The ST community notes that some boards need solder bridges SB11/SB15 closed for the VCP to reach USART1. Check UM1670 chapter 6.3.3.
 - If the card-detect signal cannot be routed to `PA10`, use SDIO card polling or move the signal to a free GPIO and document it.
 

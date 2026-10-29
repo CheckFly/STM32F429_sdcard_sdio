@@ -31,20 +31,31 @@ Source: `F429_sdcard_sdio_ecran.ioc` and `Core/Src/stm32f4xx_hal_msp.c`.
 
 ## SDIO — SD card
 
+> **PC10 note:** On the 32F429IDISCOVERY board, **PC10 is LCD_TFT R2** (on-board 2.4" LCD, see the official BSP). The display stack is parked, so PC10 is currently used as `SDIO_D2`. Re-validate signal integrity before restoring LTDC.
+>
+> The firmware uses **4-bit SDIO**:
+>
+> - `PC8` = SDIO_D0, `PC9` = SDIO_D1, `PC10` = SDIO_D2, `PC11` = SDIO_D3
+> - `PC12` = SDIO_CK
+> - `PD2` = SDIO_CMD
+>
+> The card is initialized in 1-bit mode, then switched to 4-bit with
+> `HAL_SD_ConfigWideBusOperation()`; the driver falls back to 1-bit on failure.
+
 | Pin | Signal | Direction | Notes |
 |-----|--------|-----------|-------|
 | PC8 | SDIO_D0 | AF12 | Data 0 |
 | PC9 | SDIO_D1 | AF12 | Data 1 |
-| PC10 | SDIO_D2 | AF12 | Data 2 |
+| PC10 | SDIO_D2 | AF12 | Data 2 (also LTDC_R2 when the display is restored) |
 | PC11 | SDIO_D3 | AF12 | Data 3 |
-| PC12 | SDIO_CK | AF12 | Clock |
-| PD2 | SDIO_CMD | AF12 | Command |
+| PC12 | SDIO_CK | AF12 | Clock, no pull |
+| PD2 | SDIO_CMD | AF12 | Command, pull-up |
 
 ## Card detect and serial
 
 | Pin | Signal | Current mode | Required mode | Notes |
 |-----|--------|--------------|---------------|-------|
-| PA10 | `SD_CARD_DET` | GPIO input, pull-up | GPIO input, pull-up | Reads high with card inserted and removed; wiring to confirm; conflicts with `USART1_RX` |
+| PA10 | `SD_CARD_DET` | GPIO input, pull-down | GPIO input, pull-down | Active-high card detect; validated over UART; conflicts with `USART1_RX` |
 | PA9 | `USART1_TX` | AF7 push-pull | AF7 push-pull | TX-only log to COM39; confirmed working |
 | PA0 | `UART4_TX` (alternative) | free | AF8 | Alternative if COM39 is wired to UART4 |
 | PA1 | `UART4_RX` (alternative) | free | AF8 | Alternative if COM39 is wired to UART4 |
@@ -68,9 +79,13 @@ The LTDC and SDIO assignments consume most UART pins:
 
 | Item | Current value |
 |------|---------------|
-| SYSCLK source | HSI (16 MHz) |
-| PLL | ON, but SYSCLK still HSI |
-| AHB / APB1 / APB2 | 16 MHz / 16 MHz / 16 MHz |
-| Flash latency | 0 WS |
+| SYSCLK source | HSI 16 MHz → PLL |
+| PLL | PLLM 16, PLLN 360, PLLP 2 |
+| SYSCLK | 180 MHz |
+| AHB / APB1 / APB2 | 180 MHz / 45 MHz / 90 MHz |
+| PLL48 (SDIO) | 45 MHz (PLLQ 8) |
+| Flash latency | 5 WS |
+| Voltage scaling | Scale 1 |
 
-> The current clock is intentionally conservative. For LVGL and SD throughput, switch to HSE/PLL and validate the board's HSE source (25 MHz on the `.ioc`, 8 MHz on the discovery board examples).
+> `SystemClock_Config()` is customized in `main.c`; CubeMX regeneration will revert
+> it unless the RCC/PLL settings are updated in the `.ioc`.

@@ -3099,7 +3099,6 @@ static uint32_t SD_FindSCR(SD_HandleTypeDef *hsd, uint32_t *pSCR)
   uint32_t index = 0U;
   uint32_t tempscr[2U] = {0U, 0U};
   uint32_t *scr = pSCR;
-
   /* Set Block Size To 8 Bytes */
   errorstate = SDMMC_CmdBlockLength(hsd->Instance, 8U);
   if(errorstate != HAL_SD_ERROR_NONE)
@@ -3133,16 +3132,30 @@ static uint32_t SD_FindSCR(SD_HandleTypeDef *hsd, uint32_t *pSCR)
   {
     if(__HAL_SD_GET_FLAG(hsd, SDIO_FLAG_RXDAVL))
     {
-      *(tempscr + index) = SDIO_ReadFIFO(hsd->Instance);
-      index++;
+      /* SCR is 8 bytes: never read more than the two FIFO words, otherwise
+       * the wild write corrupts the stack (observed as a HardFault at 7.5 MHz). */
+      if(index < 2U)
+      {
+        *(tempscr + index) = SDIO_ReadFIFO(hsd->Instance);
+        index++;
+      }
     }
     else if(!__HAL_SD_GET_FLAG(hsd, SDIO_FLAG_RXACT))
     {
       break;
     }
 
-    if((HAL_GetTick() - tickstart) >=  SDMMC_DATATIMEOUT)
+    /* Both SCR words received: RXACT may stay set, do not wait for it. */
+    if(index >= 2U)
     {
+      break;
+    }
+
+    /* SDMMC_DATATIMEOUT is 0xFFFFFFFF ms, i.e. no timeout at all. Bound it so a
+     * missing ACMD51 response cannot hang the firmware forever. */
+    if((HAL_GetTick() - tickstart) >= 250U)
+    {
+      __HAL_SD_CLEAR_FLAG(hsd, SDIO_STATIC_DATA_FLAGS);
       return HAL_SD_ERROR_TIMEOUT;
     }
   }

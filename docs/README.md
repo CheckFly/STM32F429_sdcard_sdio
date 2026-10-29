@@ -9,11 +9,18 @@ Project: STM32F429ZI board with SD card (SDIO + FatFs) and an RGB LCD driven by 
 | Build with STM32CubeIDE GCC toolchain | ✅ verified |
 | Build with portable `Makefile` | ✅ verified |
 | Flash through ST-Link/SWD | ✅ verified (board: 32F429IDISCOVERY) |
-| LVGL display stack | ⏳ planned / scaffolded |
+| Display | ⏸ parked; UART-only mode for now |
 | FatFs on SDIO | ⏳ sources copied, diskio pending |
 | Two partitions (4 GB + remaining space) | ⏳ planned |
 | COM39 serial log (USART1 TX) | ✅ verified |
-| SD presence on COM39 | ⚠️ `SD:REMOVED` works; card insertion not detected (PA10 wiring) |
+| SD presence on COM39 | ✅ `SD:PRESENT` / `SD:REMOVED` |
+| SDIO 4-bit | ✅ `SD:WIDE_OK`, D0..D3 on PC8..PC11 |
+| SDIO 1-bit fallback | ✅ `SD:BUS 1-bit` if the wide-bus switch fails |
+| MBR partitions (4 GB + rest) | ✅ created via `SD_CreatePartitions()` |
+| Write/read throughput test | ✅ 2509/2876 KB/s at 180 MHz CPU + 7.5 MHz 4-bit DMA |
+| Card validation | ✅ h2testw full card, no errors |
+| Partition 2 write | ✅ 532 KB/s, verify OK at LBA 8,390,656 |
+| CPU clock | ✅ 180 MHz (HSI PLL, 5 WS, APB1 45 MHz, APB2 90 MHz) |
 | GitHub Actions build | ✅ added |
 
 ## Quick start
@@ -63,8 +70,9 @@ Project: STM32F429ZI board with SD card (SDIO + FatFs) and an RGB LCD driven by 
 
 ## Known issues / decisions to confirm
 
-1. `PA10` is now configured as `GPIO_Input` with pull-up, but it reads high with the card inserted and removed. The card-detect switch is not reaching the MCU, or its active level/wiring is different.
-2. `PA10` is also `USART1_RX`; the COM39 log is USART1 TX-only on `PA9`. Do not enable USART1 RX while `PA10` is used for card detection.
-3. The LTDC layers are initialized with zero size and a null frame buffer; LVGL cannot render until the panel resolution and frame-buffer address are set.
-4. The two-partition FatFs access requires an MBR-aware diskio layer mapping logical drives `0:` and `1:` to partition offsets.
-5. The current clock is 16 MHz HSI; LVGL and SD performance will improve with a proper PLL configuration (for example 180 MHz).
+1. **PC10 is also `LTDC_R2` on the on-board LCD:** the display stack is parked, so PC10 is free for `SDIO_D2`. Re-check signal integrity before restoring LTDC.
+2. SDIO is in **4-bit** mode at 7.5 MHz (`SD_CLOCK_DIV = 4`). Dividers below 4 underrun the TX FIFO during writes.
+3. `PA10` is configured as `GPIO_Input` with pull-down (active-high card detect). It is also `USART1_RX`; the COM39 log is USART1 TX-only on `PA9`.
+4. `SD_ENABLE_SDIO` is set to `1` in `App/Src/sd_monitor.c`. The generated `MX_SDIO_SD_Init()` call must be removed after a CubeMX regeneration; the App manages SDIO in `App/Src/sd_card.c`.
+5. The two-partition FatFs access requires an MBR-aware diskio layer mapping logical drives `0:` and `1:` to partition offsets.
+6. The CPU runs at 180 MHz from HSI/PLL (5 WS, APB1 45 MHz, APB2 90 MHz). `SystemClock_Config()` is customized; CubeMX regeneration will revert it unless the RCC/PLL settings are updated in the `.ioc`.

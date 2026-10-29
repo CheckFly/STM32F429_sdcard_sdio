@@ -7,16 +7,10 @@ extern "C" {
 
 #include "main.h"
 
-/**
- * @brief Send a null-terminated string on the log UART.
- *
- * USART1 TX (PA9) is initialized by MX_USART1_UART_Init() in main.c.
- */
+/** Send a null-terminated string on the log UART. */
 void LOG_Write(const char *text);
 
-/**
- * @brief printf-style logging helper (blocking, polled transmit).
- */
+/** printf-style logging helper (blocking, polled transmit). */
 void LOG_Printf(const char *format, ...);
 
 #ifdef __cplusplus

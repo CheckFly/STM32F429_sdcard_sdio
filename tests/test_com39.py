@@ -60,7 +60,13 @@ def main() -> int:
     print("Insert/remove the SD card now...")
 
     try:
-        with serial.Serial(args.port, args.baud, timeout=0.5) as port:
+        with serial.Serial(
+            args.port,
+            args.baud,
+            timeout=0.5,
+            rtscts=False,
+            dsrdtr=False,
+        ) as port:
             while time.monotonic() < deadline:
                 raw = port.readline()
                 if not raw:

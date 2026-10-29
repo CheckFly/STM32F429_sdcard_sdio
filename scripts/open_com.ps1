@@ -19,6 +19,9 @@ if ($LogPath) {
 $serial = New-Object System.IO.Ports.SerialPort $Port, $Baud, ([System.IO.Ports.Parity]::None), 8, ([System.IO.Ports.StopBits]::One)
 $serial.ReadTimeout = 500
 $serial.NewLine = "`r`n"
+# Avoid resetting or disturbing the target when the ST-Link VCP is opened.
+$serial.DtrEnable = $false
+$serial.RtsEnable = $false
 
 try {
     $serial.Open()

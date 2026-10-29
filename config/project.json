@@ -1,6 +1,6 @@
 {
   "name": "F429_sdcard_sdio_ecran",
-  "version": "0.02",
+  "version": "0.09",
   "author": "tmangear",
   "created": "2026-10-28",
   "board": "32F429IDISCOVERY",
@@ -13,7 +13,15 @@
   "com_port": "COM39",
   "com_baudrate": 115200,
   "com_format": "8N1",
+  "cpu": {
+    "clock_mhz": 180,
+    "source": "HSI 16 MHz PLL",
+    "flash_latency_ws": 5,
+    "apb1_mhz": 45,
+    "apb2_mhz": 90
+  },
   "display": {
+    "status": "parked",
     "library": "LVGL",
     "interface": "LTDC",
     "pixel_format": "RGB565",
@@ -21,6 +29,22 @@
   },
   "storage": {
     "interface": "SDIO 4-bit",
+    "pins": {
+      "d0": "PC8",
+      "d1": "PC9",
+      "d2": "PC10",
+      "d3": "PC11",
+      "ck": "PC12",
+      "cmd": "PD2",
+      "card_detect": "PA10"
+    },
+    "sdio_clock_mhz": 7.5,
+    "clock_div": 4,
+    "dma": "DMA2 Stream6 TX / Stream3 RX, PFCTRL, FIFO full, burst INC4",
+    "measured": {
+      "write_kbs": 2509,
+      "read_kbs": 2876
+    },
     "filesystem": "FatFs",
     "partitions": [
       {

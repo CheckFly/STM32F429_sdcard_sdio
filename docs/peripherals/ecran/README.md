@@ -97,5 +97,5 @@ Key signals:
 - LTDC layers are zero-sized.
 - No frame buffer is allocated.
 - The panel resolution/timings are not confirmed.
-- The current clock is 16 MHz HSI; higher pixel clocks may require the PLL.
+- The CPU now runs at 180 MHz; the display stack is parked, so LTDC timing must be revalidated when it is restored.
 - The board's on-board LCD is SPI, not LTDC; the external panel wiring must be verified.

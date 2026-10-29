@@ -17,7 +17,18 @@
 
 ## Clocks
 
-The current `.ioc` runs from HSI (16 MHz). The board also provides an HSE source; the discovery examples use 8 MHz HSE and 180 MHz SYSCLK. Confirm the actual HSE value before changing the PLL.
+The application now runs at **180 MHz** from HSI:
+
+- HSI 16 MHz → PLLM 16 → 1 MHz
+- PLLN 360 → 360 MHz VCO
+- PLLP 2 → 180 MHz SYSCLK
+- PLLQ 8 → 45 MHz PLL48CLK (SDIO)
+- APB1 45 MHz, APB2 90 MHz
+- Flash latency 5 WS, voltage scale 1
+
+> `SystemClock_Config()` is customized in `main.c`. If CubeMX regenerates the
+> project, set the RCC/PLL to 180 MHz in CubeMX (or preserve the function), otherwise
+> it will revert to the 16 MHz HSI configuration.
 
 ## Memory map
 
@@ -52,7 +63,7 @@ STM32_Programmer_CLI.exe -c port=SWD -w build\F429_sdcard_sdio_ecran.elf -v -rst
 
 - The board's on-board LCD is an SPI ILI9341; this project uses an external RGB panel through LTDC.
 - `PA10` is assigned to `SD_CARD_DET`; verify against the physical wiring.
-- The current clock is conservative (16 MHz HSI).
+- The CPU is at 180 MHz; `SystemClock_Config()` must be preserved across CubeMX regeneration.
 
 ## References
 
