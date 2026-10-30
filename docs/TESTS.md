@@ -73,6 +73,9 @@ The official BSP and UM1670 show that **PC10 is `LCD_TFT R2`** on the 32F429IDIS
 | 2026-10-29 | 0.09 | 4-bit sweep div=4 (7.5 MHz) | PASS — 2509/2876 KB/s, verify OK, selected |
 | 2026-10-29 | 0.09 | 4-bit sweep div=3 (9 MHz) | FAIL — TX underrun (err=4096) |
 | 2026-10-29 | 0.09 | 4-bit sweep div=2 (11.25 MHz) | FAIL — TX underrun (err=4096) |
+| 2026-10-30 | 0.10 | MBR with 0xDA + 0x0C entries | PASS — write + read-back verify |
+| 2026-10-30 | 0.10 | FAT32 format of partition 2 | PASS — `SD:FS_FORMAT_OK` |
+| 2026-10-30 | 0.10 | FatFs mount of partition 2 | PASS — `0:/` lba=8390656, 3482 MB |
 | 2026-10-28 | 0.04 | Display | PARKED — removed from the active build |
 
 The current firmware is UART-only:

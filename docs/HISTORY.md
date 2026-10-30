@@ -175,3 +175,37 @@
 - Added `SD:INIT_START` / `SD:INIT_CARD_OK` / `SD:WIDE_START` traces and a
   HardFault logger (`SD:FAULT cfsr/hfsr/pc/lr`).
 - The sweep and destructive tests are disabled in the final build.
+
+## 2026-10-30 — v0.10 — FatFs on the data partition
+
+Storage layout decided for the looper application:
+
+- **Partition 1** (4 GB): internal raw area for loops, overdubs and settings.
+  MBR type `0xDA` (non-filesystem) so it never appears as a drive on a PC.
+  The firmware accesses it directly by LBA; FatFs never mounts it.
+- **Partition 2** (remaining space, 3483 MB): user-visible FAT32 volume for
+  project save/load, mounted as `0:`.
+
+Changes:
+
+- `App/Src/sd_diskio.c`: FatFs diskio over `HAL_SD_*Blocks_DMA()`.
+  - reads the MBR to locate the FAT partition (highest FAT entry wins),
+  - refuses access outside the partition,
+  - bounce buffer for unaligned FatFs pointers,
+  - 3 retries per transfer, error logging `SD:FS_READ_FAIL` / `SD:FS_WRITE_FAIL`.
+- `App/Src/sd_fs.c`: `SD_FS_Mount()` / `SD_FS_Unmount()` / `SD_FS_LogUsage()` /
+  `SD_FS_LogRoot()` / `SD_FS_SelfTest()`, FAT32 format via `f_mkfs()` when asked.
+- Build: `ff.c`, `ff_gen_drv.c`, `diskio.c` and `option/unicode.c` added;
+  `_VOLUMES = 1`, `_USE_LFN = 1` (static LFN buffer, no heap).
+- `SD_CreatePartitions()` now writes the MBR with write + read-back verify and
+  retries: the first write after the 4-bit switch can be silently dropped.
+- The format path is blocked unless the partition table was validated, so a
+  failure can no longer format the internal partition by mistake.
+- Validated on COM39:
+  - `SD:PART1 LBA=2048 sectors=8388608 type=0xDA (internal)`
+  - `SD:PART2 LBA=8390656 sectors=7133184 type=0x0C`
+  - `SD:FS_FORMAT_OK`
+  - `SD:FS_MOUNT_OK drive=0:/ lba=8390656 sectors=7133184`
+  - `SD:FS_USAGE total=3482MB free=3482MB cluster=32768B`
+- `SD_FS_SELFTEST_ON_INIT` (file create/write/read/delete) is available but off
+  by default; it still has to be run on the bench.

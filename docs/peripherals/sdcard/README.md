@@ -52,10 +52,10 @@ copy is patched to read at most 2 words and to time out after 250 ms.
 > The second partition size is computed from the **real capacity** returned by
 > `HAL_SD_GetCardInfo()`, not hardcoded.
 
-| Partition | Size | Filesystem | Label | FatFs drive |
-|-----------|------|------------|-------|-------------|
-| 1 | 4 GB (4096 MB) | FAT32 | `SDCARD` | `0:` |
-| 2 | total capacity − 4096 MB − 1 MB | FAT32 (≤32 GB) or exFAT (>32 GB) | `DATA` | `1:` |
+| Partition | Size | MBR type | Filesystem | Purpose | FatFs drive |
+|-----------|------|----------|------------|---------|-------------|
+| 1 | 4 GB (4096 MB) | `0xDA` non-FS | none (raw) | internal looper area: loops, overdubs, settings | — |
+| 2 | total capacity − 4096 MB − 1 MB | `0x0C` (FAT32 LBA) or `0x07` (>32 GB) | FAT32 / exFAT | user projects, save and load | `0:` |
 
 Example plans (real capacity is typically lower than the marketed size):
 
@@ -80,28 +80,51 @@ Use `scripts/partition_sdcard.ps1`:
 
 > `diskpart clean` erases the entire card. Verify the disk number with `diskpart` → `list disk` first.
 
-## FatFs plan
+## FatFs
 
-1. Copy `ff.c`, `ff.h`, `ffconf.h`, `diskio.c`, `diskio.h`, `ff_gen_drv.c`, `ff_gen_drv.h`, `integer.h` into `Middlewares/Third_Party/FatFs/src`.
-2. Add `sd_diskio.c`/`.h` adapted from the STM32Cube template.
-3. Read the MBR at LBA 0 and store the start LBA and sector count of both partitions.
-4. Map `pdrv = 0` to partition 1 and `pdrv = 1` to partition 2.
-5. Apply the partition start LBA in `disk_read`/`disk_write`.
-6. Mount:
+Implemented in `App/Src/sd_diskio.c` and `App/Src/sd_fs.c`.
 
-   ```c
-   FATFS fs0, fs1;
-   f_mount(&fs0, "0:", 1);
-   f_mount(&fs1, "1:", 1);
-   ```
+- `sd_diskio.c` implements the FatFs `disk_*` callbacks on top of
+  `HAL_SD_ReadBlocks_DMA()` / `HAL_SD_WriteBlocks_DMA()`:
+  - reads LBA 0 at init to locate the FAT partition (highest FAT-type entry),
+  - applies the partition start LBA to every access and rejects out-of-range
+    requests,
+  - uses an aligned 512-byte bounce buffer when the caller pointer is not
+    word-aligned,
+  - retries each transfer 3 times and logs `SD:FS_READ_FAIL` / `SD:FS_WRITE_FAIL`.
+- `sd_fs.c` exposes `SD_FS_Mount()`, `SD_FS_Unmount()`, `SD_FS_LogUsage()`,
+  `SD_FS_LogRoot()` and `SD_FS_SelfTest()`. It can create the FAT32 volume with
+  `f_mkfs()` when `SD_FORMAT_PART2_ON_INIT = 1`.
+- FatFs build settings: `_VOLUMES = 1`, `_USE_LFN = 1` (static LFN buffer, no
+  heap), `_MAX_SS = 512`, `_USE_MKFS = 1`, `_FS_EXFAT = 1`.
+- `option/unicode.c` is compiled for `ff_wtoupper()`.
 
-7. Report:
+Reported on COM39:
 
-   ```text
-   SD:MOUNT_OK
-   SD:PART1_OK
-   SD:PART2_OK
-   ```
+```text
+SD:PART1 LBA=2048 sectors=8388608 type=0xDA (internal)
+SD:PART2 LBA=8390656 sectors=7133184 type=0x0C
+SD:FS_FORMAT_OK
+SD:FS_MOUNT_OK drive=0:/ lba=8390656 sectors=7133184
+SD:FS_USAGE total=3482MB free=3482MB cluster=32768B
+```
+
+### Internal partition is invisible on a PC
+
+Partition 1 uses MBR type `0xDA` ("non-filesystem data"), so Windows and Linux
+do not assign it a drive letter. The firmware will access it directly by LBA;
+FatFs only ever mounts partition 2. Note that "invisible" means "not mounted",
+not "protected": a partitioning tool can still overwrite it.
+
+### Self-test
+
+Set `SD_FS_SELFTEST_ON_INIT = 1` to create `FSTEST.TXT`, write it, read it back,
+compare and delete it. Expected log:
+
+```text
+SD:FS_TEST_START
+SD:FS_TEST OK bytes=38
+```
 
 ## Card presence
 
@@ -129,7 +152,10 @@ on change:
 
 ## Known issues
 
-- `PA10` is currently an output.
-- The second partition requires MBR-aware diskio.
-- exFAT requires `FF_FS_EXFAT` and a FatFs version that supports it.
-- SDIO pull-ups and signal integrity must be checked on the actual board.
+- `SD_CreatePartitions()` must run once to install the 0xDA + 0x0C table; after
+  that keep `SD_CREATE_PARTITIONS_ON_INIT = 0`.
+- The first write after the 4-bit switch can be dropped by the card; the MBR
+  writer therefore verifies by read-back and retries.
+- The file self-test has not been run on the bench yet.
+- exFAT requires `FF_FS_EXFAT`; the MBR type switches to `0x07` above 32 GB.
+- PC10 (`SDIO_D2`) is shared with `LTDC_R2`; re-check if the display returns.

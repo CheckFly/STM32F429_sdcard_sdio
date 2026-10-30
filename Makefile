@@ -28,7 +28,8 @@ C_INCLUDES    := \
 	-IDrivers/STM32F4xx_HAL_Driver/Inc \
 	-IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
 	-IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
-	-IDrivers/CMSIS/Include
+	-IDrivers/CMSIS/Include \
+	-IMiddlewares/Third_Party/FatFs/src
 
 OPT           := -O0 -g3
 CFLAGS        := $(MCU) $(C_DEFS) $(C_INCLUDES) $(OPT) -std=gnu11 -Wall \
@@ -38,11 +39,15 @@ LDFLAGS       := $(MCU) -T$(LDSCRIPT) --specs=nosys.specs --specs=nano.specs \
 	-Wl,-Map=$(BUILD_DIR)/$(TARGET).map -Wl,--gc-sections -static \
 	-Wl,--start-group -lc -lm -Wl,--end-group
 
-VPATH         := Core/Src:App/Src:Drivers/STM32F4xx_HAL_Driver/Src:Core/Startup
+VPATH         := Core/Src:App/Src:Drivers/STM32F4xx_HAL_Driver/Src:Core/Startup:Middlewares/Third_Party/FatFs/src:Middlewares/Third_Party/FatFs/src/option
 
 C_SOURCES     := $(wildcard Core/Src/*.c) \
                  $(wildcard App/Src/*.c) \
-                 $(wildcard Drivers/STM32F4xx_HAL_Driver/Src/*.c)
+                 $(wildcard Drivers/STM32F4xx_HAL_Driver/Src/*.c) \
+                 Middlewares/Third_Party/FatFs/src/ff.c \
+                 Middlewares/Third_Party/FatFs/src/ff_gen_drv.c \
+                 Middlewares/Third_Party/FatFs/src/diskio.c \
+                 Middlewares/Third_Party/FatFs/src/option/unicode.c
 ASM_SOURCES   := Core/Startup/startup_stm32f429zitx.s
 
 C_OBJECTS     := $(addprefix $(BUILD_DIR)/,$(notdir $(C_SOURCES:.c=.o)))

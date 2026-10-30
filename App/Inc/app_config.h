@@ -9,6 +9,17 @@
  * The test writes 1 MB of data on the second partition area. */
 #define SD_RUN_SPEED_TEST_ON_INIT    0
 
+/* Set to 1 to mount the user data partition (partition 2) as FatFs "0:"
+ * after the SD card is initialized. */
+#define SD_MOUNT_FS_ON_INIT          1
+
+/* Set to 1 to create a FAT32 filesystem on partition 2 when none is found.
+ * Destructive: erases the project partition. */
+#define SD_FORMAT_PART2_ON_INIT      0
+
+/* Set to 1 to run a file create/write/read/delete self-test after mounting. */
+#define SD_FS_SELFTEST_ON_INIT       0
+
 /* Set to 1 to sweep the SDIO clock dividers and keep the fastest reliable one. */
 #define SD_RUN_CLOCK_SWEEP_ON_INIT   0
 

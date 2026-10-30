@@ -28,8 +28,10 @@ int SD_WaitTransfer(uint32_t timeout_ms);
 /**
  * @brief Create an MBR with two partitions on the SD card.
  *
- * Partition 1: first_partition_mb (default 4096 MB) starting at 1 MB.
- * Partition 2: remaining space minus 1 MB, starting after partition 1.
+ * Partition 1: first_partition_mb (default 4096 MB) starting at 1 MB,
+ *              type 0xDA (non-filesystem, internal looper area).
+ * Partition 2: remaining space minus 1 MB, starting after partition 1,
+ *              FAT32 LBA (or exFAT type for very large volumes).
  * The card is NOT formatted; only the partition table is written.
  * This operation erases the existing partition table.
  *

@@ -10,8 +10,8 @@ Project: STM32F429ZI board with SD card (SDIO + FatFs) and an RGB LCD driven by 
 | Build with portable `Makefile` | ✅ verified |
 | Flash through ST-Link/SWD | ✅ verified (board: 32F429IDISCOVERY) |
 | Display | ⏸ parked; UART-only mode for now |
-| FatFs on SDIO | ⏳ sources copied, diskio pending |
-| Two partitions (4 GB + remaining space) | ⏳ planned |
+| FatFs on SDIO | ✅ mounted on partition 2 as `0:` (FAT32, 3482 MB) |
+| Two partitions (4 GB internal + remaining FAT32) | ✅ 0xDA internal + 0x0C FAT32 LBA |
 | COM39 serial log (USART1 TX) | ✅ verified |
 | SD presence on COM39 | ✅ `SD:PRESENT` / `SD:REMOVED` |
 | SDIO 4-bit | ✅ `SD:WIDE_OK`, D0..D3 on PC8..PC11 |
@@ -20,6 +20,7 @@ Project: STM32F429ZI board with SD card (SDIO + FatFs) and an RGB LCD driven by 
 | Write/read throughput test | ✅ 2509/2876 KB/s at 180 MHz CPU + 7.5 MHz 4-bit DMA |
 | Card validation | ✅ h2testw full card, no errors |
 | Partition 2 write | ✅ 532 KB/s, verify OK at LBA 8,390,656 |
+| File self-test (create/write/read/delete) | ⏳ flag `SD_FS_SELFTEST_ON_INIT`, to run on the bench |
 | CPU clock | ✅ 180 MHz (HSI PLL, 5 WS, APB1 45 MHz, APB2 90 MHz) |
 | GitHub Actions build | ✅ added |
 

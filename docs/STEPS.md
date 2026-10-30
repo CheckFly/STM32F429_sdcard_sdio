@@ -33,12 +33,13 @@
 - [x] Validate 4-bit wide-bus operation and DMA throughput.
 - [x] Create the MBR with 4 GB + remaining-space partitions.
 - [x] Copy FatFs from STM32Cube F4 V1.27.1.
-- [ ] Add `ffconf.h` with two volumes.
-- [ ] Implement `sd_diskio.c` using the global `hsd`.
-- [ ] Parse the MBR and map `0:` and `1:` to the two partitions.
-- [ ] Mount both volumes and emit `SD:MOUNT_OK`, `SD:PART1_OK`, `SD:PART2_OK`.
+- [x] Add `ffconf.h` (single volume, static LFN buffer).
+- [x] Implement `sd_diskio.c` using the global `hsd`.
+- [x] Parse the MBR and map `0:` to the FAT partition (partition 2).
+- [x] Mount the volume and emit `SD:FS_MOUNT_OK` + `SD:FS_USAGE`.
+- [ ] Run the file self-test (`SD_FS_SELFTEST_ON_INIT`).
 - [ ] Test a 4 GB FAT32 partition and the remaining-space partition.
-- [ ] Bump version and tag once FatFs is mounted (`0.10`).
+- [ ] Tag `v0.10` once the file self-test passes.
 
 ## Phase 3 — LVGL and LTDC
 

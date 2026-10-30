@@ -217,68 +217,76 @@ int SD_CreatePartitions(uint32_t first_partition_mb)
     part2_type = (plan.part2_mb > 32768U) ? 0x07U : 0x0CU;
 
     memset(mbr, 0, sizeof(mbr));
-    SD_MBR_FillEntry(&mbr_bytes[446U], 0x00U, 0x0CU, part1_lba, part1_sectors);
+    /* Partition 1 is the internal looper area: it uses a "non-filesystem"
+     * type so that it never appears as a drive on a PC. Partition 2 is the
+     * user-visible FAT32 project partition. */
+    SD_MBR_FillEntry(&mbr_bytes[446U], 0x00U, 0xDAU, part1_lba, part1_sectors);
     SD_MBR_FillEntry(&mbr_bytes[462U], 0x00U, part2_type, part2_lba, part2_sectors);
     mbr_bytes[510U] = 0x55U;
     mbr_bytes[511U] = 0xAAU;
 
     LOG_Write("SD:PARTITIONS_CREATE (erases partition table)\r\n");
 
-    if (HAL_SD_WriteBlocks_DMA(&hsd, (uint8_t *)mbr, 0U, 1U) != HAL_OK)
     {
-        LOG_Printf("SD:CREATE_WRITE_FAIL err=%lu\r\n", (unsigned long)hsd.ErrorCode);
-        return 0;
-    }
+        uint32_t attempt;
+        int written = 0;
 
-    if (!SD_WaitTransfer(5000U))
-    {
-        LOG_Printf("SD:CREATE_WRITE_FAIL err=%lu\r\n", (unsigned long)hsd.ErrorCode);
-        return 0;
-    }
-
-    if (!SD_WaitReady(2000U))
-    {
-        LOG_Write("SD:CREATE_WAIT_TIMEOUT\r\n");
-    }
-
-    HAL_Delay(50U);
-
-    {
-        HAL_StatusTypeDef read_status = HAL_ERROR;
-        uint32_t retry;
-
-        for (retry = 0U; retry < 3U; ++retry)
+        /* The first write after the wide-bus switch can be silently dropped by
+         * the card, so write and read back in a retry loop and only accept a
+         * matching verify. */
+        for (attempt = 0U; (attempt < 3U) && (written == 0); ++attempt)
         {
-            read_status = HAL_SD_ReadBlocks_DMA(&hsd, (uint8_t *)verify, 0U, 1U);
-            if (read_status == HAL_OK)
+            if (attempt > 0U)
             {
-                if (SD_WaitTransfer(5000U))
+                LOG_Printf("SD:CREATE_RETRY %lu\r\n", (unsigned long)attempt);
+                (void)SD_WaitReady(2000U);
+                HAL_Delay(100U);
+
+                if (attempt == 2U)
                 {
-                    break;
+                    LOG_Write("SD:CREATE_CARD_REINIT\r\n");
+                    (void)SD_Card_InitAtClock(SD_CLOCK_DIV);
                 }
-                read_status = HAL_ERROR;
             }
 
-            LOG_Printf("SD:CREATE_VERIFY_RETRY %lu err=%lu\r\n",
-                       (unsigned long)retry, (unsigned long)hsd.ErrorCode);
-            (void)SD_WaitReady(1000U);
-            HAL_Delay(100U);
+            (void)SD_WaitReady(2000U);
+            HAL_Delay(50U);
+
+            if (HAL_SD_WriteBlocks_DMA(&hsd, (uint8_t *)mbr, 0U, 1U) != HAL_OK ||
+                !SD_WaitTransfer(5000U))
+            {
+                LOG_Printf("SD:CREATE_WRITE_FAIL err=%lu\r\n", (unsigned long)hsd.ErrorCode);
+                continue;
+            }
+
+            (void)SD_WaitReady(2000U);
+            HAL_Delay(10U);
+
+            if (HAL_SD_ReadBlocks_DMA(&hsd, (uint8_t *)verify, 0U, 1U) != HAL_OK ||
+                !SD_WaitTransfer(5000U))
+            {
+                LOG_Printf("SD:CREATE_VERIFY_READ_FAIL err=%lu\r\n", (unsigned long)hsd.ErrorCode);
+                continue;
+            }
+
+            if (memcmp(mbr, verify, sizeof(mbr)) == 0)
+            {
+                written = 1;
+            }
+            else
+            {
+                LOG_Write("SD:CREATE_VERIFY_MISMATCH\r\n");
+            }
         }
 
-        if (read_status != HAL_OK)
+        if (written == 0)
         {
-            LOG_Printf("SD:CREATE_VERIFY_READ_FAIL err=%lu\r\n", (unsigned long)hsd.ErrorCode);
+            LOG_Write("SD:CREATE_FAIL\r\n");
             return 0;
         }
     }
 
-    if (memcmp(mbr, verify, sizeof(mbr)) != 0)
-    {
-        LOG_Write("SD:CREATE_VERIFY_MISMATCH\r\n");
-        return 0;
-    }
-
-    LOG_Printf("SD:PART1 LBA=%lu sectors=%lu type=0x0C\r\n",
+    LOG_Printf("SD:PART1 LBA=%lu sectors=%lu type=0xDA (internal)\r\n",
                (unsigned long)part1_lba, (unsigned long)part1_sectors);
     LOG_Printf("SD:PART2 LBA=%lu sectors=%lu type=0x%02X\r\n",
                (unsigned long)part2_lba, (unsigned long)part2_sectors, part2_type);

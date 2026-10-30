@@ -49,6 +49,20 @@ Use me for display rendering, file access, SD card mounting, partitioning, and i
 >
 > If no card-detect switch is available, poll SDIO initialization instead and treat `HAL_SD_Init`/`HAL_SD_GetCardState` success as "card present".
 
+## Storage layout (looper project)
+
+| Partition | Size | MBR type | Use | FatFs |
+|-----------|------|----------|-----|-------|
+| 1 | 4 GB | `0xDA` non-FS | internal loops / overdubs / settings, raw block access | never mounted |
+| 2 | remaining | `0x0C` FAT32 (0x07 > 32 GB) | project save/load | `0:` |
+
+- `App/Src/sd_diskio.c` reads the MBR, picks the highest FAT-type entry and
+  applies its start LBA. Access outside the partition returns `RES_PARERR`.
+- `App/Src/sd_fs.c` mounts it; `SD_FS_SelfTest()` validates create/write/read.
+- Keep `SD_CREATE_PARTITIONS_ON_INIT = 0` after the table is installed.
+- MBR writes must be read back and retried: the first write after the 4-bit
+  switch can be silently dropped.
+
 ## SD card presence state machine
 
 ```text

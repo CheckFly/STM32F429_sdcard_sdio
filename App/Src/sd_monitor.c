@@ -4,6 +4,7 @@
 #include "log_uart.h"
 #include "main.h"
 #include "sd_card.h"
+#include "sd_fs.h"
 #include "sd_test.h"
 
 #define SD_DEBOUNCE_MS 200U
@@ -74,6 +75,22 @@ static void SD_TryInit(uint32_t now)
                 can_test = 0U;
                 LOG_Write("SD:TEST_SKIPPED (partitions failed)\r\n");
             }
+#endif
+
+            /* Mount after the partition table is in place: the diskio layer
+             * locates the FAT partition by reading the MBR. Never format when
+             * the partition table could not be validated. */
+#if SD_MOUNT_FS_ON_INIT
+            if (!SD_FS_Mount((can_test != 0U) ? SD_FORMAT_PART2_ON_INIT : 0))
+            {
+                LOG_Write("SD:FS_NOT_MOUNTED\r\n");
+            }
+#if SD_FS_SELFTEST_ON_INIT
+            else
+            {
+                (void)SD_FS_SelfTest();
+            }
+#endif
 #endif
 
 #if SD_RUN_SPEED_TEST_ON_INIT
